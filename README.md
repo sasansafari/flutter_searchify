@@ -1,5 +1,5 @@
 
-# Searchify
+# flutter_searchify
 
 **A customizable Flutter search input widget with overlay dropdown, debounce, and highlight matching.**
 
@@ -25,9 +25,17 @@ Make your app's search experience smooth, responsive, and visually appealing wit
 Add to your `pubspec.yaml`:
 
 ```yaml
+# flutter_searchify
+
+A customizable and easy-to-use search widget for Flutter.
+
+## Installation
+
+Add the latest version of `flutter_searchify` to your `pubspec.yaml`:
+
+```yaml
 dependencies:
-  searchify:
-    path: ../searchify  # or your package source
+  flutter_searchify: ^0.1.1
 ```
 
 Then run:
