@@ -40,7 +40,7 @@ flutter pub get
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:searchify/searchify_refactored.dart';  // adjust import path
+import 'package:searchify/searchify.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,7 +49,13 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
-  Widget build(BuildContext context) => MaterialApp(home: const SearchExample());
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Searchify Demo',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const SearchExample(),
+    );
+  }
 }
 
 class SearchExample extends StatefulWidget {
@@ -60,67 +66,77 @@ class SearchExample extends StatefulWidget {
 
 class _SearchExampleState extends State<SearchExample> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'];
 
-  Future<List<String>> _searchItems(String keyword) async {
-    await Future.delayed(const Duration(milliseconds: 300)); // debounce simulation
-    return _items
-        .where((item) => item.toLowerCase().contains(keyword.toLowerCase()))
+  final List<String> _cities = [
+    'Tehran',
+    'Mashhad',
+    'Isfahan',
+    'Karaj',
+    'Shiraz',
+    'Tabriz',
+    'Qom',
+    'Ahvaz',
+    'Kermanshah',
+    'Urmia',
+    'Rasht',
+    'Zahedan',
+    'Hamadan',
+    'Arak',
+    'Yazd',
+    'Bandar Abbas',
+    'Kerman',
+    'Qazvin',
+    'Zanjan',
+    'Sanandaj',
+    'Khorramabad',
+    'Bojnord',
+    'Sari',
+    'Gorgan',
+    'Bushehr',
+    'Dezful',
+    'Shahr-e Kord',
+    'Birjand',
+    'Ilam',
+    'Semnan',
+  ];
+
+  Future<List<String>> _searchCities(String keyword) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _cities
+        .where((city) => city.toLowerCase().contains(keyword.toLowerCase()))
         .toList();
-  }
-
-  Widget _highlightMatch(String text, String query) {
-    if (query.isEmpty) return Text(text);
-    final lcText = text.toLowerCase();
-    final lcQuery = query.toLowerCase();
-    final spans = <TextSpan>[];
-    int start = 0;
-    int index = lcText.indexOf(lcQuery);
-    while (index >= 0) {
-      if (index > start) spans.add(TextSpan(text: text.substring(start, index)));
-      spans.add(TextSpan(
-          text: text.substring(index, index + query.length),
-          style: const TextStyle(backgroundColor: Colors.yellowAccent, fontWeight: FontWeight.bold)));
-      start = index + query.length;
-      index = lcText.indexOf(lcQuery, start);
-    }
-    if (start < text.length) spans.add(TextSpan(text: text.substring(start)));
-    return RichText(text: TextSpan(style: const TextStyle(color: Colors.black), children: spans));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Searchify Demo')),
+      appBar: AppBar(title: const Text('Searchify Example')),
       body: Center(
         child: SizedBox(
-          width: 300,
+          width: MediaQuery.sizeOf(context).width * .7,
           child: Searchify<String>(
             searchController: _controller,
-            onSearch: _searchItems,
-            itemOnTap: (item) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Selected: $item'))),
-            itemBuilder: (item) => _highlightMatch(item, _controller.text),
+            onSearch: _searchCities,
+            itemOnTap: (city) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Selected: $city')));
+            },
+
+            // itemBuilder: (city) {
+            //   return _highlightOverride(city, _controller.text);
+            // },
             suffixIcon: const Icon(Icons.search),
-            style: const SearchifyStyle(
-              searchBoxDecoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-              ),
-              listBoxDecoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
-              ),
-              itemPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            ),
+
+            overlayWidth: 320,
           ),
         ),
       ),
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.blue[50],
     );
   }
 }
+
 ```
 
 ---
