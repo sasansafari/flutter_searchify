@@ -1,4 +1,3 @@
-// searchify_refactored.dart
 library searchify;
 
 import 'dart:async';
@@ -19,13 +18,34 @@ class SearchifyStyle {
 
   const SearchifyStyle({
     this.searchInputDecoration = const InputDecoration(hintText: 'Search...'),
-    this.searchBoxDecoration = const BoxDecoration(),
+    this.searchBoxDecoration = const BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.all(Radius.circular(10)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 5,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    this.listBoxDecoration = const BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.all(Radius.circular(10)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
     this.itemDecoration = const BoxDecoration(),
-    this.listBoxDecoration = const BoxDecoration(),
-    this.itemPadding = const EdgeInsets.all(0),
-    this.itemMargin = const EdgeInsets.all(0),
-    this.searchInputPadding = const EdgeInsets.all(0),
-    this.searchInputMargin = const EdgeInsets.all(0),
+    this.itemPadding = const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+    this.itemMargin = EdgeInsets.zero,
+    this.searchInputPadding =
+        const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+    this.searchInputMargin = EdgeInsets.zero,
   });
 }
 
@@ -49,6 +69,7 @@ class Searchify<T> extends StatefulWidget {
   final FocusNode? focusNode;
   final FocusOrder order;
   final SearchifyStyle style;
+  final double? overlayWidth;
 
   const Searchify({
     super.key,
@@ -71,10 +92,49 @@ class Searchify<T> extends StatefulWidget {
     this.textDirection,
     this.clearOnItemTap = true,
     this.style = const SearchifyStyle(),
+    this.overlayWidth,
   });
 
   @override
   State<Searchify<T>> createState() => _SearchifyState<T>();
+
+  Widget highlightMatch(String text, String query) {
+    if (query.isEmpty) return Text(text);
+    final lcText = text.toLowerCase();
+    final lcQuery = query.toLowerCase();
+
+    final spans = <TextSpan>[];
+    int start = 0;
+    int index = lcText.indexOf(lcQuery);
+
+    while (index >= 0) {
+      if (index > start) {
+        spans.add(TextSpan(text: text.substring(start, index)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + query.length),
+          style: const TextStyle(
+            backgroundColor: Colors.yellowAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+      start = index + query.length;
+      index = lcText.indexOf(lcQuery, start);
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start)));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(color: Colors.black),
+        children: spans,
+      ),
+    );
+  }
 }
 
 class _SearchifyState<T> extends State<Searchify<T>> {
@@ -86,6 +146,8 @@ class _SearchifyState<T> extends State<Searchify<T>> {
   List<T> _filteredItems = <T>[];
   Timer? _debounce;
   bool _isItemSelected = false;
+
+  List<T> _searchHistory = [];
 
   @override
   void initState() {
@@ -109,7 +171,9 @@ class _SearchifyState<T> extends State<Searchify<T>> {
 
   void _toggleOverlay() {
     _removeOverlay();
-    if (widget.searchController.text.isNotEmpty && _filteredItems.isNotEmpty) {
+    if ((widget.searchController.text.isNotEmpty &&
+            _filteredItems.isNotEmpty) ||
+        (widget.searchController.text.isEmpty && _searchHistory.isNotEmpty)) {
       _overlayEntry = _createOverlayEntry();
       Overlay.of(context).insert(_overlayEntry!);
     }
@@ -127,37 +191,63 @@ class _SearchifyState<T> extends State<Searchify<T>> {
     });
   }
 
+  void _addToHistory(T item) {
+    setState(() {
+      _searchHistory.remove(item);
+      _searchHistory.add(item);
+      if (_searchHistory.length > 4) {
+        _searchHistory.removeAt(0);
+      }
+    });
+  }
+
   OverlayEntry _createOverlayEntry() {
-    final renderBox = context.findRenderObject() as RenderBox;
+    final renderBox =
+        _overlayKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) {
+      return OverlayEntry(builder: (_) => const SizedBox());
+    }
+
     final position = renderBox.localToGlobal(Offset.zero);
+    final height = renderBox.size.height;
+    final width = renderBox.size.width;
+
+    final showHistory =
+        widget.searchController.text.isEmpty && _searchHistory.isNotEmpty;
+    final displayList =
+        showHistory ? List<T>.from(_searchHistory.reversed) : _filteredItems;
 
     return OverlayEntry(
       builder: (context) => Positioned(
         left: position.dx,
-        top: position.dy + 50,
-        width: widget.listWidth,
+        top: position.dy + height,
+        width: width,
         child: CompositedTransformFollower(
           link: _layerLink,
           showWhenUnlinked: false,
-          offset: const Offset(0, 50),
+          offset: Offset(0, height),
           child: Material(
             color: Colors.transparent,
             child: Container(
               decoration: widget.style.listBoxDecoration,
               constraints: const BoxConstraints(maxHeight: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: widget.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.separated(
+                      padding: EdgeInsets.zero,
                       shrinkWrap: true,
-                      itemCount: _filteredItems.length,
+                      physics: const ClampingScrollPhysics(),
+                      itemCount: displayList.length,
                       separatorBuilder: (_, __) => widget.separator,
                       itemBuilder: (context, index) {
-                        final item = _filteredItems[index];
+                        final item = displayList[index];
                         return InkWell(
                           onTap: () {
                             if (widget.clearOnItemTap) _filteredItems.clear();
                             _removeOverlay();
                             widget.itemOnTap(item);
+                            _addToHistory(item);
                             setState(() => _isItemSelected = true);
                           },
                           child: Container(
@@ -233,7 +323,7 @@ class _SearchifyState<T> extends State<Searchify<T>> {
                     if (value.isEmpty) {
                       setState(() {
                         _filteredItems.clear();
-                        _removeOverlay();
+                        _toggleOverlay();
                       });
                     } else {
                       _search(value);

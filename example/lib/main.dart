@@ -7,7 +7,6 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,35 +19,54 @@ class MyApp extends StatelessWidget {
 
 class SearchExample extends StatefulWidget {
   const SearchExample({super.key});
-
   @override
   State<SearchExample> createState() => _SearchExampleState();
 }
 
 class _SearchExampleState extends State<SearchExample> {
   final TextEditingController _controller = TextEditingController();
+
   final List<String> _cities = [
-    'New York',
-    'Los Angeles',
-    'Chicago',
-    'Houston',
-    'Phoenix',
-    'Philadelphia',
-    'San Antonio',
-    'San Diego',
-    'Dallas',
-    'San Jose',
+    'Tehran',
+    'Mashhad',
+    'Isfahan',
+    'Karaj',
+    'Shiraz',
+    'Tabriz',
+    'Qom',
+    'Ahvaz',
+    'Kermanshah',
+    'Urmia',
+    'Rasht',
+    'Zahedan',
+    'Hamadan',
+    'Arak',
+    'Yazd',
+    'Bandar Abbas',
+    'Kerman',
+    'Qazvin',
+    'Zanjan',
+    'Sanandaj',
+    'Khorramabad',
+    'Bojnord',
+    'Sari',
+    'Gorgan',
+    'Bushehr',
+    'Dezful',
+    'Shahr-e Kord',
+    'Birjand',
+    'Ilam',
+    'Semnan',
   ];
 
   Future<List<String>> _searchCities(String keyword) async {
-    await Future.delayed(const Duration(milliseconds: 300)); // شبیه‌سازی تاخیر
+    await Future.delayed(const Duration(milliseconds: 300));
     return _cities
         .where((city) => city.toLowerCase().contains(keyword.toLowerCase()))
         .toList();
   }
 
-  // برای نمایش متن جستجو شده به صورت هایلایت
-  Widget _highlightMatch(String text, String query) {
+  Widget _highlightOverride(String text, String query) {
     if (query.isEmpty) return Text(text);
     final lcText = text.toLowerCase();
     final lcQuery = query.toLowerCase();
@@ -65,8 +83,9 @@ class _SearchExampleState extends State<SearchExample> {
         TextSpan(
           text: text.substring(index, index + query.length),
           style: const TextStyle(
-            backgroundColor: Colors.yellowAccent,
+            backgroundColor: Colors.lightBlueAccent,
             fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       );
@@ -92,7 +111,7 @@ class _SearchExampleState extends State<SearchExample> {
       appBar: AppBar(title: const Text('Searchify Example')),
       body: Center(
         child: SizedBox(
-          width: 320,
+          width: MediaQuery.sizeOf(context).width * .7,
           child: Searchify<String>(
             searchController: _controller,
             onSearch: _searchCities,
@@ -101,41 +120,14 @@ class _SearchExampleState extends State<SearchExample> {
                 context,
               ).showSnackBar(SnackBar(content: Text('Selected: $city')));
             },
+
             itemBuilder: (city) {
-              return _highlightMatch(city, _controller.text);
+              return _highlightOverride(city, _controller.text);
             },
+
             suffixIcon: const Icon(Icons.search),
-            style: const SearchifyStyle(
-              searchBoxDecoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 5,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              listBoxDecoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              itemPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-              itemMargin: EdgeInsets.symmetric(vertical: 3, horizontal: 5),
-              searchInputPadding: EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 8,
-              ),
-              searchInputMargin: EdgeInsets.all(10),
-            ),
+
+            overlayWidth: 320,
           ),
         ),
       ),
