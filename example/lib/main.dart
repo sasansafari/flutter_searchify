@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:searchify/searchify.dart';
+import 'package:searchify/flutter_searchify.dart';
 
 void main() {
   runApp(const MyApp());
@@ -73,7 +73,7 @@ class _SearchExampleState extends State<SearchExample> {
       body: Center(
         child: SizedBox(
           width: MediaQuery.sizeOf(context).width * .7,
-          child: Searchify<String>(
+          child: FlutterSearchify<String>(
             searchController: _controller,
             onSearch: _searchCities,
             itemOnTap: (city) {

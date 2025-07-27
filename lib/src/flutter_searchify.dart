@@ -3,10 +3,10 @@ library searchify;
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-typedef SearchCity<T> = Future<List<T>> Function(String keyword);
+typedef SearchObject<T> = Future<List<T>> Function(String keyword);
 typedef ListItem<T> = Widget Function(T model);
 
-class SearchifyStyle {
+class Style {
   final InputDecoration searchInputDecoration;
   final BoxDecoration searchBoxDecoration;
   final BoxDecoration itemDecoration;
@@ -16,7 +16,7 @@ class SearchifyStyle {
   final EdgeInsets searchInputPadding;
   final EdgeInsets searchInputMargin;
 
-  const SearchifyStyle({
+  const Style({
     this.searchInputDecoration = const InputDecoration(hintText: 'Search...'),
     this.searchBoxDecoration = const BoxDecoration(
       color: Colors.white,
@@ -49,9 +49,9 @@ class SearchifyStyle {
   });
 }
 
-class Searchify<T> extends StatefulWidget {
+class FlutterSearchify<T> extends StatefulWidget {
   final TextEditingController searchController;
-  final SearchCity<T>? onSearch;
+  final SearchObject<T>? onSearch;
   final Function(T) itemOnTap;
   final ListItem<T>? itemBuilder;
   final Widget? suffixIcon;
@@ -68,10 +68,10 @@ class Searchify<T> extends StatefulWidget {
   final bool clearOnItemTap;
   final FocusNode? focusNode;
   final FocusOrder order;
-  final SearchifyStyle style;
+  final Style style;
   final double? overlayWidth;
 
-  const Searchify({
+  const FlutterSearchify({
     super.key,
     required this.searchController,
     required this.onSearch,
@@ -91,12 +91,12 @@ class Searchify<T> extends StatefulWidget {
     this.itemTextAlign = TextAlign.start,
     this.textDirection,
     this.clearOnItemTap = true,
-    this.style = const SearchifyStyle(),
+    this.style = const Style(),
     this.overlayWidth,
   });
 
   @override
-  State<Searchify<T>> createState() => _SearchifyState<T>();
+  State<FlutterSearchify<T>> createState() => _FlutterSearchifyState<T>();
 
   Widget highlightMatch(String text, String query) {
     if (query.isEmpty) return Text(text);
@@ -137,7 +137,7 @@ class Searchify<T> extends StatefulWidget {
   }
 }
 
-class _SearchifyState<T> extends State<Searchify<T>> {
+class _FlutterSearchifyState<T> extends State<FlutterSearchify<T>> {
   final GlobalKey _overlayKey = GlobalKey();
   final LayerLink _layerLink = LayerLink();
   late final FocusNode _focusNode;

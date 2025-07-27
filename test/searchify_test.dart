@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_searchify/src/flutter_searchify.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:searchify/searchify.dart';
 
 void main() {
   testWidgets('Searchify renders and responds to input', (
@@ -19,7 +19,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Searchify<String>(
+          body: FlutterSearchify<String>(
             searchController: controller,
             onSearch: searchCity,
             itemOnTap: (_) {},
