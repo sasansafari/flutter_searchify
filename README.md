@@ -5,6 +5,8 @@
 
 Make your app's search experience smooth, responsive, and visually appealing with minimal setup.
 
+![Searchify Demo](example/assets/searchify.gif)
+
 ---
 
 ## Features
