@@ -1,4 +1,4 @@
-## [0.1.2] - 2025-07-24
+## [0.1.3] - 2025-07-25
 
 - Initial release of `flutter_searchify`.
 - A customizable autocomplete dropdown widget with overlay support.
