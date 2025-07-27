@@ -1,16 +1,13 @@
+// searchify_refactored.dart
 library searchify;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-/// Function type for performing search
 typedef SearchCity<T> = Future<List<T>> Function(String keyword);
-
-/// Function type for building each item
 typedef ListItem<T> = Widget Function(T model);
 
-class Searchify<T> extends StatefulWidget {
-  final TextEditingController searchController;
+class SearchifyStyle {
   final InputDecoration searchInputDecoration;
   final BoxDecoration searchBoxDecoration;
   final BoxDecoration itemDecoration;
@@ -19,22 +16,39 @@ class Searchify<T> extends StatefulWidget {
   final EdgeInsets itemMargin;
   final EdgeInsets searchInputPadding;
   final EdgeInsets searchInputMargin;
-  final Function(T) itemOnTap;
-  final Function()? onTap;
-  final TextAlign searchFieldTextAlign;
-  final TextAlign itemTextAlign;
-  final double listWidth;
+
+  const SearchifyStyle({
+    this.searchInputDecoration = const InputDecoration(hintText: 'Search...'),
+    this.searchBoxDecoration = const BoxDecoration(),
+    this.itemDecoration = const BoxDecoration(),
+    this.listBoxDecoration = const BoxDecoration(),
+    this.itemPadding = const EdgeInsets.all(0),
+    this.itemMargin = const EdgeInsets.all(0),
+    this.searchInputPadding = const EdgeInsets.all(0),
+    this.searchInputMargin = const EdgeInsets.all(0),
+  });
+}
+
+class Searchify<T> extends StatefulWidget {
+  final TextEditingController searchController;
   final SearchCity<T>? onSearch;
+  final Function(T) itemOnTap;
+  final ListItem<T> itemBuilder;
   final Widget? suffixIcon;
   final Widget separator;
-  final ListItem<T> itemBuilder;
   final bool enabled;
   final bool isLoading;
   final bool inSelectedMode;
+  final Function()? onTap;
   final TextStyle? textStyle;
+  final TextAlign searchFieldTextAlign;
+  final TextAlign itemTextAlign;
+  final double listWidth;
+  final TextDirection? textDirection;
+  final bool clearOnItemTap;
   final FocusNode? focusNode;
   final FocusOrder order;
-  final TextDirection? textDirection;
+  final SearchifyStyle style;
 
   const Searchify({
     super.key,
@@ -42,20 +56,12 @@ class Searchify<T> extends StatefulWidget {
     required this.onSearch,
     required this.itemOnTap,
     required this.itemBuilder,
-    this.searchInputDecoration = const InputDecoration(hintText: 'Search...'),
-    this.itemDecoration = const BoxDecoration(),
-    this.searchBoxDecoration = const BoxDecoration(),
-    this.listBoxDecoration = const BoxDecoration(),
-    this.itemPadding = const EdgeInsets.all(0),
-    this.itemMargin = const EdgeInsets.all(0),
-    this.searchInputPadding = const EdgeInsets.all(0),
-    this.searchInputMargin = const EdgeInsets.all(0),
+    this.suffixIcon,
     this.separator = const SizedBox.shrink(),
     this.listWidth = 200,
     this.isLoading = false,
     this.enabled = true,
     this.inSelectedMode = true,
-    this.suffixIcon,
     this.onTap,
     this.textStyle,
     this.focusNode,
@@ -63,6 +69,8 @@ class Searchify<T> extends StatefulWidget {
     this.searchFieldTextAlign = TextAlign.start,
     this.itemTextAlign = TextAlign.start,
     this.textDirection,
+    this.clearOnItemTap = true,
+    this.style = const SearchifyStyle(),
   });
 
   @override
@@ -71,8 +79,11 @@ class Searchify<T> extends StatefulWidget {
 
 class _SearchifyState<T> extends State<Searchify<T>> {
   final GlobalKey _overlayKey = GlobalKey();
-  List<T> _filteredItems = <T>[];
+  final LayerLink _layerLink = LayerLink();
+  late final FocusNode _focusNode;
+
   OverlayEntry? _overlayEntry;
+  List<T> _filteredItems = <T>[];
   Timer? _debounce;
   bool _isItemSelected = false;
 
@@ -80,33 +91,40 @@ class _SearchifyState<T> extends State<Searchify<T>> {
   void initState() {
     super.initState();
     _isItemSelected = widget.inSelectedMode;
+    _focusNode = widget.focusNode ?? FocusNode();
   }
 
   @override
   void dispose() {
-    _overlayEntry?.remove();
     _debounce?.cancel();
+    _overlayEntry?.remove();
+    if (widget.focusNode == null) _focusNode.dispose();
     super.dispose();
   }
 
-  void _toggleOverlay() {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      _overlayEntry?.remove();
-      _overlayEntry = null;
-      if (widget.searchController.text.isNotEmpty &&
-          _filteredItems.isNotEmpty) {
-        _overlayEntry = _createOverlayEntry();
-        Overlay.of(context).insert(_overlayEntry!);
-      }
-    });
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
-  Future<List<T>> _getFilteredItems(String searchValue) async {
-    if (widget.onSearch != null) {
-      return await widget.onSearch!(searchValue);
+  void _toggleOverlay() {
+    _removeOverlay();
+    if (widget.searchController.text.isNotEmpty && _filteredItems.isNotEmpty) {
+      _overlayEntry = _createOverlayEntry();
+      Overlay.of(context).insert(_overlayEntry!);
     }
-    return [];
+  }
+
+  Future<void> _search(String value) async {
+    if (value.length < 3 || widget.onSearch == null) return;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final results = await widget.onSearch!(value);
+      setState(() {
+        _filteredItems = results;
+      });
+      _toggleOverlay();
+    });
   }
 
   OverlayEntry _createOverlayEntry() {
@@ -114,57 +132,45 @@ class _SearchifyState<T> extends State<Searchify<T>> {
     final position = renderBox.localToGlobal(Offset.zero);
 
     return OverlayEntry(
-      builder: (context) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          _overlayEntry?.remove();
-          _overlayEntry = null;
-          _filteredItems.clear();
-          widget.focusNode?.unfocus();
-        },
-        child: Stack(
-          children: [
-            Positioned(
-              left: position.dx,
-              top: position.dy + 50,
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: widget.listWidth,
-                  decoration: widget.listBoxDecoration,
-                  child: widget.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : SizedBox(
-                          height: 300,
-                          child: ListView.separated(
-                            itemCount: _filteredItems.length,
-                            separatorBuilder: (_, __) => widget.separator,
-                            itemBuilder: (context, index) {
-                              final item = _filteredItems[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  _filteredItems.clear();
-                                  _overlayEntry?.remove();
-                                  _overlayEntry = null;
-                                  widget.itemOnTap(item);
-                                  _isItemSelected = true;
-                                  setState(() {});
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: widget.itemDecoration,
-                                  padding: widget.itemPadding,
-                                  margin: widget.itemMargin,
-                                  child: widget.itemBuilder(item),
-                                ),
-                              );
-                            },
+      builder: (context) => Positioned(
+        left: position.dx,
+        top: position.dy + 50,
+        width: widget.listWidth,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 50),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              decoration: widget.style.listBoxDecoration,
+              constraints: const BoxConstraints(maxHeight: 300),
+              child: widget.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _filteredItems.length,
+                      separatorBuilder: (_, __) => widget.separator,
+                      itemBuilder: (context, index) {
+                        final item = _filteredItems[index];
+                        return InkWell(
+                          onTap: () {
+                            if (widget.clearOnItemTap) _filteredItems.clear();
+                            _removeOverlay();
+                            widget.itemOnTap(item);
+                            setState(() => _isItemSelected = true);
+                          },
+                          child: Container(
+                            decoration: widget.style.itemDecoration,
+                            padding: widget.style.itemPadding,
+                            margin: widget.style.itemMargin,
+                            child: widget.itemBuilder(item),
                           ),
-                        ),
-                ),
-              ),
+                        );
+                      },
+                    ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -172,72 +178,71 @@ class _SearchifyState<T> extends State<Searchify<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final isEnabled = widget.enabled ? !_isItemSelected : false;
+    final isEnabled = widget.enabled;
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        _overlayEntry?.remove();
-        _overlayEntry = null;
+        _removeOverlay();
         _filteredItems.clear();
-        widget.focusNode?.unfocus();
+        _focusNode.unfocus();
         widget.onTap?.call();
       },
-      child: Container(
-        key: _overlayKey,
-        padding: widget.searchInputPadding,
-        margin: widget.searchInputMargin,
-        decoration: widget.searchBoxDecoration,
-        child: Row(
-          children: [
-            if (_isItemSelected)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
+      child: CompositedTransformTarget(
+        link: _layerLink,
+        child: Container(
+          key: _overlayKey,
+          padding: widget.style.searchInputPadding,
+          margin: widget.style.searchInputMargin,
+          decoration: widget.style.searchBoxDecoration,
+          child: Row(
+            children: [
+              if (_isItemSelected && widget.searchController.text.isNotEmpty)
+                GestureDetector(
+                  onTap: () => setState(() {
                     _isItemSelected = false;
                     widget.searchController.clear();
-                  });
-                },
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.clear, size: 18),
+                    _filteredItems.clear();
+                    _removeOverlay();
+                  }),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.clear, size: 18),
+                  ),
+                ),
+              Expanded(
+                child: TextField(
+                  focusNode: _focusNode,
+                  controller: widget.searchController,
+                  enabled: isEnabled,
+                  style: widget.textStyle,
+                  textAlign: widget.searchFieldTextAlign,
+                  textDirection: widget.textDirection,
+                  decoration: widget.style.searchInputDecoration.copyWith(
+                    suffixIcon: widget.suffixIcon != null
+                        ? GestureDetector(
+                            onTap: () async {
+                              await _search(widget.searchController.text);
+                            },
+                            child: widget.suffixIcon!,
+                          )
+                        : null,
+                  ),
+                  onTap: _toggleOverlay,
+                  onChanged: (value) {
+                    if (value.isEmpty) {
+                      setState(() {
+                        _filteredItems.clear();
+                        _removeOverlay();
+                      });
+                    } else {
+                      _search(value);
+                    }
+                  },
                 ),
               ),
-            Expanded(
-              child: TextField(
-                keyboardType: TextInputType.text,
-                enabled: isEnabled,
-                style: widget.textStyle,
-                textAlign: widget.searchFieldTextAlign,
-                textDirection: widget.textDirection,
-                controller: widget.searchController,
-                decoration: widget.searchInputDecoration.copyWith(
-                  suffixIcon: widget.suffixIcon != null
-                      ? GestureDetector(
-                          onTap: () async {
-                            // _filteredItems = await _getFilteredItems(
-                            //   widget.searchController.text,
-                            // );
-                            // setState(() => _toggleOverlay());
-                            _filteredItems = await _getFilteredItems(
-                                widget.searchController.text);
-                            setState(() {});
-                            _toggleOverlay();
-                          },
-                          child: widget.suffixIcon!,
-                        )
-                      : null,
-                ),
-                onChanged: (value) async {
-                  if (value.length >= 3) {
-                    _filteredItems = await _getFilteredItems(value);
-                    setState(() {});
-                    _toggleOverlay();
-                  }
-                },
-                onTap: _toggleOverlay,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
