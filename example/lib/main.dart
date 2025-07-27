@@ -66,44 +66,44 @@ class _SearchExampleState extends State<SearchExample> {
         .toList();
   }
 
-  Widget _highlightOverride(String text, String query) {
-    if (query.isEmpty) return Text(text);
-    final lcText = text.toLowerCase();
-    final lcQuery = query.toLowerCase();
+  // Widget _highlightOverride(String text, String query) {
+  //   if (query.isEmpty) return Text(text);
+  //   final lcText = text.toLowerCase();
+  //   final lcQuery = query.toLowerCase();
 
-    final spans = <TextSpan>[];
-    int start = 0;
-    int index = lcText.indexOf(lcQuery);
+  //   final spans = <TextSpan>[];
+  //   int start = 0;
+  //   int index = lcText.indexOf(lcQuery);
 
-    while (index >= 0) {
-      if (index > start) {
-        spans.add(TextSpan(text: text.substring(start, index)));
-      }
-      spans.add(
-        TextSpan(
-          text: text.substring(index, index + query.length),
-          style: const TextStyle(
-            backgroundColor: Colors.lightBlueAccent,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-      start = index + query.length;
-      index = lcText.indexOf(lcQuery, start);
-    }
+  //   while (index >= 0) {
+  //     if (index > start) {
+  //       spans.add(TextSpan(text: text.substring(start, index)));
+  //     }
+  //     spans.add(
+  //       TextSpan(
+  //         text: text.substring(index, index + query.length),
+  //         style: const TextStyle(
+  //           backgroundColor: Colors.lightBlueAccent,
+  //           fontWeight: FontWeight.bold,
+  //           color: Colors.white,
+  //         ),
+  //       ),
+  //     );
+  //     start = index + query.length;
+  //     index = lcText.indexOf(lcQuery, start);
+  //   }
 
-    if (start < text.length) {
-      spans.add(TextSpan(text: text.substring(start)));
-    }
+  //   if (start < text.length) {
+  //     spans.add(TextSpan(text: text.substring(start)));
+  //   }
 
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(color: Colors.black),
-        children: spans,
-      ),
-    );
-  }
+  //   return RichText(
+  //     text: TextSpan(
+  //       style: const TextStyle(color: Colors.black),
+  //       children: spans,
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -121,10 +121,9 @@ class _SearchExampleState extends State<SearchExample> {
               ).showSnackBar(SnackBar(content: Text('Selected: $city')));
             },
 
-            itemBuilder: (city) {
-              return _highlightOverride(city, _controller.text);
-            },
-
+            // itemBuilder: (city) {
+            //   return _highlightOverride(city, _controller.text);
+            // },
             suffixIcon: const Icon(Icons.search),
 
             overlayWidth: 320,

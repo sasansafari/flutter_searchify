@@ -53,7 +53,7 @@ class Searchify<T> extends StatefulWidget {
   final TextEditingController searchController;
   final SearchCity<T>? onSearch;
   final Function(T) itemOnTap;
-  final ListItem<T> itemBuilder;
+  final ListItem<T>? itemBuilder;
   final Widget? suffixIcon;
   final Widget separator;
   final bool enabled;
@@ -76,7 +76,7 @@ class Searchify<T> extends StatefulWidget {
     required this.searchController,
     required this.onSearch,
     required this.itemOnTap,
-    required this.itemBuilder,
+    this.itemBuilder,
     this.suffixIcon,
     this.separator = const SizedBox.shrink(),
     this.listWidth = 200,
@@ -254,7 +254,10 @@ class _SearchifyState<T> extends State<Searchify<T>> {
                             decoration: widget.style.itemDecoration,
                             padding: widget.style.itemPadding,
                             margin: widget.style.itemMargin,
-                            child: widget.itemBuilder(item),
+                            child: widget.itemBuilder != null
+                                ? widget.itemBuilder!(item)
+                                : widget.highlightMatch(item.toString(),
+                                    widget.searchController.text),
                           ),
                         );
                       },
