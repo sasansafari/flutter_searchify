@@ -6,16 +6,33 @@ import 'package:flutter/material.dart';
 typedef SearchObject<T> = Future<List<T>> Function(String keyword);
 typedef ListItem<T> = Widget Function(T model);
 
+/// A class that defines the styling options for [FlutterSearchify].
 class Style {
+  /// Decoration for the search input field container.
   final InputDecoration searchInputDecoration;
+
+  /// Decoration for the outer search box container.
   final BoxDecoration searchBoxDecoration;
+
+  /// Decoration for individual result items.
   final BoxDecoration itemDecoration;
+
+  /// Decoration for the list of result items.
   final BoxDecoration listBoxDecoration;
+
+  /// Padding for each item in the result list.
   final EdgeInsets itemPadding;
+
+  /// Margin for each item in the result list.
   final EdgeInsets itemMargin;
+
+  /// Padding around the search input field.
   final EdgeInsets searchInputPadding;
+
+  /// Margin around the search input field.
   final EdgeInsets searchInputMargin;
 
+  /// Creates a [Style] object for customizing the visual appearance of the search field and its results.
   const Style({
     this.searchInputDecoration = const InputDecoration(hintText: 'Search...'),
     this.searchBoxDecoration = const BoxDecoration(
@@ -49,28 +66,72 @@ class Style {
   });
 }
 
+/// A highly customizable search bar widget with live results and history dropdown.
+///
+/// Supports asynchronous searching, debounce, styling, overlay positioning,
+/// item builders, highlighting, and focus handling.
 class FlutterSearchify<T> extends StatefulWidget {
+  /// The controller for the search input text.
   final TextEditingController searchController;
+
+  /// Async search function called on input changes.
   final SearchObject<T>? onSearch;
+
+  /// Callback triggered when an item is selected.
   final Function(T) itemOnTap;
+
+  /// Custom builder for list items.
   final ListItem<T>? itemBuilder;
+
+  /// Optional suffix icon to show at the end of the input field.
   final Widget? suffixIcon;
+
+  /// Widget between list items.
   final Widget separator;
+
+  /// Whether the input field is enabled.
   final bool enabled;
+
+  /// Shows a loading indicator in the dropdown when true.
   final bool isLoading;
+
+  /// Whether to enter selection mode when an item is tapped.
   final bool inSelectedMode;
+
+  /// Tap callback on the input field.
   final Function()? onTap;
+
+  /// Text style for the input.
   final TextStyle? textStyle;
+
+  /// Text alignment for the input field.
   final TextAlign searchFieldTextAlign;
+
+  /// Text alignment for list items.
   final TextAlign itemTextAlign;
+
+  /// Width of the list overlay.
   final double listWidth;
+
+  /// Text direction of the entire widget.
   final TextDirection? textDirection;
+
+  /// Whether to clear the search field when item tapped.
   final bool clearOnItemTap;
+
+  /// Optional focus node to manage keyboard focus.
   final FocusNode? focusNode;
+
+  /// Focus traversal order.
   final FocusOrder order;
+
+  /// Styling for all parts of the widget.
   final Style style;
+
+  /// Optional fixed width for the dropdown overlay.
   final double? overlayWidth;
 
+  /// Creates a [FlutterSearchify] widget.
   const FlutterSearchify({
     super.key,
     required this.searchController,
@@ -98,6 +159,20 @@ class FlutterSearchify<T> extends StatefulWidget {
   @override
   State<FlutterSearchify<T>> createState() => _FlutterSearchifyState<T>();
 
+  /// Highlights the parts of [text] that match the [query] string.
+  ///
+  /// This method returns a [RichText] widget with matching substrings highlighted
+  /// using a yellow background and bold font. If the query is empty, it simply
+  /// returns the original [text] wrapped in a [Text] widget.
+  ///
+  /// Useful for displaying search results where you want to visually
+  /// emphasize the parts of the text that match the user's input.
+  ///
+  /// Example:
+  /// ```dart
+  /// highlightMatch('Flutter Searchify', 'search')
+  /// ```
+  /// will return a widget with the word "Search" highlighted.
   Widget highlightMatch(String text, String query) {
     if (query.isEmpty) return Text(text);
     final lcText = text.toLowerCase();
@@ -164,10 +239,17 @@ class _FlutterSearchifyState<T> extends State<FlutterSearchify<T>> {
     super.dispose();
   }
 
+  /// Removes the search results overlay from the screen if present.
+
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
   }
+
+  /// Shows or hides the search results overlay based on input and results.
+  ///
+  /// Displays either the filtered items or recent search history
+  /// depending on whether the search input is empty.
 
   void _toggleOverlay() {
     _removeOverlay();
@@ -178,6 +260,12 @@ class _FlutterSearchifyState<T> extends State<FlutterSearchify<T>> {
       Overlay.of(context).insert(_overlayEntry!);
     }
   }
+
+  /// Performs a debounced search using the provided keyword [value].
+  ///
+  /// Only triggers the search if the input length is at least 3 characters.
+  /// Waits 300 milliseconds before executing [widget.onSearch] to reduce redundant calls.
+  /// Updates the [_filteredItems] and toggles the overlay with results.
 
   Future<void> _search(String value) async {
     if (value.length < 3 || widget.onSearch == null) return;
