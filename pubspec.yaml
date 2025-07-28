@@ -1,6 +1,6 @@
 name: flutter_searchify
 description: A reusable autocomplete search widget for Flutter.
-version: 0.1.3
+version: 0.1.4
 homepage: https://github.com/sasansafari/flutter_searchify
 publisher: sasansafari.com
 environment:

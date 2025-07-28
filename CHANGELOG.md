@@ -1,8 +1,11 @@
-## [0.1.3] - 2025-07-25
+## [0.1.4] - 2025-07-25
 
-- Initial release of `flutter_searchify`.
-- A customizable autocomplete dropdown widget with overlay support.
-- Supports async search (e.g. from API) with debounce.
-- Easily pluggable into any form with full UI customization (input style, list items, separators, etc.).
-- Designed for RTL/LTR support and keyboard interactions.
-- Built for flexibility: define how items are searched, built, and selected.
+### Added
+- `highlightMatch(String text, String query)` function for showing matched query with highlight
+- Documentation comments for public methods and state logic
+
+### Changed
+- Default `itemBuilder` now uses `highlightMatch` if no builder is provided
+
+### Fixed
+- Minor UI inconsistency in padding/margin alignment between input and list items
