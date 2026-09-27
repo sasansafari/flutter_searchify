@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  searchify:
+  flutter_searchify:
     path: ../
 
 
